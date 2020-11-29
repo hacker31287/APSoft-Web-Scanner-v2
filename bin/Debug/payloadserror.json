@@ -1,0 +1,24 @@
+{
+  "sql": [
+    "REIT|SQL (warning|error|syntax)",
+    "warning: mysql_connect()",
+    "warning: mysql_fetch_row()",
+    "error in your sql syntax",
+    "warning: mysql_result()",
+    "mysql_num_rows()",
+    "mysql_fetch_assoc()",
+    "mysql_fetch_row()",
+    "mysql_numrows()",
+    "mysql_fetch_object()",
+    "MySQL Driver",
+    "MySQL ODBC",
+    "MySQL Error",
+    "error in your SQL syntax"
+  ],
+  "lfi": [
+    "root:"
+  ],
+  "xss": [
+    "REIT|PH09NIXPY74X<svg"
+  ]
+}

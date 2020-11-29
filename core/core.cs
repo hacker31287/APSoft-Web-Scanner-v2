@@ -1,6 +1,7 @@
 ﻿using Leaf.xNet;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -79,7 +80,7 @@ namespace APSoft_Web_Scanner_v2
         public vulnererrors payloadserrorsinstance { get; set; }
 
         [JsonIgnore]
-        public List<string> proxylist = new List<string>();
+        public ConcurrentQueue<string> proxylist = new ConcurrentQueue<string>();
 
         [JsonRequired]
         private string proxyregex { get; set; }
@@ -202,7 +203,6 @@ namespace APSoft_Web_Scanner_v2
                 new xssscanner(),
                 new lfiscanner()
             };
-
         }
 
         public void searcherupdateview()
@@ -271,6 +271,10 @@ namespace APSoft_Web_Scanner_v2
             try
             {
                 searcherupdateview();
+                if (threadscount < searcherslist.Count)
+                {
+                    threadscount = searcherslist.Count;
+                }
                 int eachsearcher = threadscount / searcherslist.Count;
                 searcherslist.ForEach(func =>
                 {
@@ -288,7 +292,7 @@ namespace APSoft_Web_Scanner_v2
             }
             catch (Exception E)
             {
-                MessageBox.Show(E.Message);
+                handleerror("searchersstart=> " + E.Message);
             }
         }
 
@@ -301,6 +305,10 @@ namespace APSoft_Web_Scanner_v2
                 {
                     func.helper = this;
                 });
+                if (threadscount < scannerslist.Count)
+                {
+                    threadscount = scannerslist.Count;
+                }
                 int eachcount = threadscount / scannerslist.Count;
                 List<Task> tklist = new List<Task>();
                 for (int i = 0; i < scannerslist.Count; i++)
@@ -312,7 +320,7 @@ namespace APSoft_Web_Scanner_v2
             }
             catch (Exception E)
             {
-                MessageBox.Show(E.Message);
+                handleerror("scannerstart=> " + E.Message);
             }
         }
 
@@ -324,14 +332,44 @@ namespace APSoft_Web_Scanner_v2
 
         public void loadlist(ref List<string> targetlist, string title)
         {
-            using (OpenFileDialog dialog = new OpenFileDialog())
+            try
             {
-                dialog.Multiselect = false;
-                dialog.Filter = "Text files|*.txt";
-                if (dialog.ShowDialog() == DialogResult.OK)
+                using (OpenFileDialog dialog = new OpenFileDialog())
                 {
-                    targetlist.AddRange(File.ReadAllLines(dialog.FileName));
+                    dialog.Multiselect = false;
+                    dialog.Filter = "Text files(*.txt)|*.txt";
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        targetlist.AddRange(File.ReadAllLines(dialog.FileName));
+                    }
                 }
+            }
+            catch (Exception E)
+            {
+                handleerror("loadlist=> " + E.Message);
+            }
+        }
+
+        public void loadlist(ref ConcurrentQueue<string> targetlist, string title)
+        {
+            try
+            {
+                using (OpenFileDialog dialog = new OpenFileDialog())
+                {
+                    dialog.Multiselect = false;
+                    dialog.Filter = "Text files(*.txt)|*.txt";
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        foreach (string item in File.ReadAllLines(dialog.FileName))
+                        {
+                            targetlist.Enqueue(item);
+                        }
+                    }
+                }
+            }
+            catch (Exception E)
+            {
+                handleerror("loadlist=> " + E.Message);
             }
         }
 
@@ -375,11 +413,12 @@ namespace APSoft_Web_Scanner_v2
                             .Select(func => func.Value.ToString())
                             .Distinct()
                             .ToList();
-                    this.proxylist.AddRange(proxies);
+                    proxies.ForEach(func => proxylist.Enqueue(func));
                 }
             }
-            catch
+            catch (Exception E)
             {
+                handleerror("loadproxyfromurl=> " + E.Message);
             }
         }
 
@@ -402,14 +441,37 @@ namespace APSoft_Web_Scanner_v2
             }
         }
 
+        private string getproxy()
+        {
+            string res = "retry";
+            try
+            {
+                if (proxylist.Count > 0)
+                {
+                    bool got = proxylist.TryDequeue(out res);
+                    if (!got)
+                    {
+                        res = "retry";
+                    }
+                }
+            }
+            catch { }
+            return res;
+        }
+
         public void setproxy(ref HttpRequest req)
         {
             if (this.useproxy)
             {
-                if (proxylist.Count > 0)
+                try
                 {
-                    string proxy = proxylist[new Random().Next(0, proxylist.Count - 1)];
-                    if (proxy.Length <= 0) return;
+                again:
+                    string proxy = getproxy();
+                    if (proxy == "retry")
+                    {
+                        Thread.Sleep(new Random().Next(100, 200) * 100);
+                        goto again;
+                    }
                     switch (proxytype)
                     {
                         case "socks4":
@@ -424,6 +486,9 @@ namespace APSoft_Web_Scanner_v2
                             req.Proxy = ProxyClient.Parse(ProxyType.HTTP, proxy);
                             break;
                     }
+                }
+                catch (Exception E)
+                {
                 }
             }
         }
@@ -520,6 +585,11 @@ namespace APSoft_Web_Scanner_v2
                 Interlocked.Increment(ref stats.scannererror);
             }
             return res;
+        }
+
+        private void handleerror(string text)
+        {
+            MessageBox.Show(text, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         #region dork setting

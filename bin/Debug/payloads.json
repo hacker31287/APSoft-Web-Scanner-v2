@@ -1,0 +1,11 @@
+{
+  "sql": [
+    "'"
+  ],
+  "lfi": [
+    "etc/passwd"
+  ],
+  "xss": [
+    "<script>alert('hi');</script>"
+  ]
+}

@@ -89,7 +89,7 @@ namespace APSoft_Web_Scanner_v2
                     AllowAutoRedirect = true
                 };
                 helper.setproxy(ref req);
-                again:
+            again:
                 string url = "https://search.yahoo.com/search?p=" + dork + "&b=" + currentinheritance;
                 string source = req.Get(url, null).ToString();
                 if (!source.Contains("We did not find results"))
@@ -163,7 +163,7 @@ namespace APSoft_Web_Scanner_v2
             {
                 Interlocked.Increment(ref helper.stats.searchererror);
             }
-            exit:
+        exit:
 
             return res;
         }
@@ -185,7 +185,7 @@ namespace APSoft_Web_Scanner_v2
                         }
                     }
 
-                    again:
+                again:
                     try
                     {
                         helper.urlslist.AddRange(sourcefiles);
@@ -212,7 +212,7 @@ namespace APSoft_Web_Scanner_v2
                                 }
                             }
                         }
-                        again:
+                    again:
                         try
                         {
                             helper.urlslist.AddRange(sourcefiles);

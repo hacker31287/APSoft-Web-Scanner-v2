@@ -89,7 +89,7 @@ namespace APSoft_Web_Scanner_v2
                 helper.setproxy(ref req);
                 req.Get("https://www.google.com/ncr", null);
                 string url = $"https://www.google.com/search?q={dork}&num=100&hl=en&complete=0&safe=off&filter=0&btnG=Search&start=0";
-                again:
+            again:
                 req.ClearAllHeaders();
                 req.Cookies = req.Response.Cookies;
                 string source = req.Get(url).ToString();
@@ -152,7 +152,7 @@ namespace APSoft_Web_Scanner_v2
                         }
                     }
 
-                    again:
+                again:
                     try
                     {
                         helper.urlslist.AddRange(sourcefiles);
@@ -179,7 +179,7 @@ namespace APSoft_Web_Scanner_v2
                                 }
                             }
                         }
-                        again:
+                    again:
                         try
                         {
                             helper.urlslist.AddRange(sourcefiles);
